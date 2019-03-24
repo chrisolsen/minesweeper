@@ -1,0 +1,52 @@
+local function set_mine_count(count)
+    local str = tostring(count)
+    local counter = gui.get_node("mine_count")
+    local count = string.rep("0", 3 - #str) .. str
+    gui.set_text(counter, count)
+end
+
+local function increment_timer(self)
+    self.time = self.time + 1
+    local now = tostring(self.time)
+    local time = string.rep("0", 3 - #now) .. now
+    gui.set_text(self.timer, time)
+end
+
+function init(self)
+    msg.post(".", "acquire_input_focus")
+
+    self.time = 0
+    self.resetBtn = gui.get_node("reset")
+    self.timer = gui.get_node("timer")
+end
+
+function on_message(self, message_id, message, sender)
+    if message_id == hash("game:reset") then
+        self.mineCount = message.minecount
+        set_mine_count(self.mineCount)
+    elseif message_id == hash("time:update") then
+        increment_timer(self)
+    elseif message_id == hash("mine:flag") then
+        self.mineCount = self.mineCount + message.value
+        set_mine_count(self.mineCount)
+    elseif message_id == hash("show:happy") then
+        gui.play_flipbook(self.resetBtn, "happy")
+    elseif message_id == hash("show:sad") then
+        gui.play_flipbook(self.resetBtn, "sad")
+    elseif message_id == hash("show:surprised") then
+        gui.play_flipbook(self.resetBtn, "surprised")
+    elseif message_id == hash("stop:win") then
+        gui.play_flipbook(self.resetBtn, "sunglasses")
+    elseif message_id == hash("stop:lose") then
+        gui.play_flipbook(self.resetBtn, "sad")
+    end
+end
+
+function on_input(self, action_id, action)
+    if action_id == hash("leftclick") and action.pressed then
+        if gui.pick_node(self.resetBtn, action.x, action.y) then
+            msg.post("@system:", "reboot")
+            msg.post("#", "show:happy")
+        end
+    end
+end

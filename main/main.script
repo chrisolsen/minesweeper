@@ -1,0 +1,54 @@
+local Game = require("main.game")
+
+function init(self)
+    self.game = Game.new(self)
+
+    msg.post(".", "acquire_input_focus")
+
+    -- messages
+    self.leftclick_msg = hash("tiles:leftclick")
+    self.rightclick_msg = hash("tiles:rightclick")
+    self.stoptimer_msg = hash("timer:stop")
+
+    -- actions
+    self.leftclick_action = hash("leftclick")
+    self.rightclick_action = hash("rightclick")
+end
+
+
+function final(self)
+    self.game:stop_timer()
+end
+
+
+function on_message(self, message_id, message, sender)
+    if message_id == self.leftclick_msg then
+        self.game:select_tile(message.x, message.y)
+
+    elseif message_id == self.rightclick_msg then
+        self.game:setflag(message.x, message.y)
+
+    elseif message_id == self.stoptimer_msg then
+        self.game:stop_timer()
+
+    elseif message_id == self.win_msg then
+        self.game:end_game(true)
+    end
+end
+
+
+function on_input(self, action_id, action)
+    if not action.pressed and not action.released then return end	
+    if self.game.game_over then return end
+    
+    local coords = {x=action.x-10, y=action.y-10}
+    
+    if action_id == self.leftclick_action and action.pressed then
+        msg.post("#", self.leftclick_msg, coords)
+        msg.post("/ui", "show:surprised")
+    elseif action_id == self.leftclick_action and action.released then
+        msg.post("/ui", "show:happy")
+    elseif action_id == self.rightclick_action and action.pressed then
+        msg.post("#", self.rightclick_msg, coords)
+    end
+end
